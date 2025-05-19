@@ -15,22 +15,23 @@ range_max = 200;    % maximum range
 %% User Defined Range and Velocity of target
 % Define the target initial position and velocity. Note: Velocity remains contant
 
-range = 80;         % target initial position (m)
-velocity = -25;     % target initial velocity (m/s)
+range = 100;         % target initial position (m)
+velocity = -5;     % target initial velocity (m/s)
 
 
 %% FMCW Waveform Generation
 % Design the FMCW waveform by giving the specs of each of its parameters.
-% Calculate the Bandwidth (B), Chirp Time (Tchirp) and Slope (slope) of the FMCW chirp using the requirements above.
+% Calculate the Bandwidth (B_sweep), Chirp Time (Tchirp) and Slope (slope) of the FMCW chirp using the requirements above.
 
-c = 3e8;        % speed of light (m/s)
-range_res = 1;  % range resolution (m)
-B = c / (2 * range_res);
+c = 3e8;        % speed of light (m/s) - standard
+range_resolution = 1;  % range resolution (m) given 
+% from 
+B_sweep = c / (2 * range_resolution);
 Tchirp = 5.5 * 2 * range_max / c;
-slope = B / Tchirp;
+slope = B_sweep / Tchirp;
 
 % Operating carrier frequency of Radar
-fc = 77e9;   %carrier freq
+fc = 77e9;   %carrier freq  - given
 
 % The number of chirps in one sequence. Its ideal to have 2^ value for the ease of running the FFT for Doppler Estimation.
 Nd = 128;   % # of doppler cells OR # of sent periods % number of chirps
@@ -42,6 +43,7 @@ Nr = 1024;   % for length of time OR # of range cells
 t = linspace(0, Nd*Tchirp, Nr*Nd); % total time for samples
 
 % Creating the vectors for Tx, Rx and Mix based on the total samples input.
+target_range = zeros(1,length(t));  % Range of the Target for constant velocity
 Tx = zeros(1,length(t));    % transmitted signal
 Rx = zeros(1,length(t));    % received signal
 Mix = zeros(1,length(t));   % beat signal
@@ -57,8 +59,8 @@ td = zeros(1,length(t));
 for i=1:length(t)
 
     % For each time stamp update the Range of the Target for constant velocity.
-    range_t(i) = range + velocity * t(i);
-    td(i) = (2 * range_t(i)) / c;
+    target_range(i) = range + velocity * t(i);
+    td(i) = (2 * target_range(i)) / c;
 
     % For each time sample we need update the transmitted and received signal.
     Tx(i) = cos(2 * pi * (fc * t(i) + (slope * t(i)^2) / 2));
@@ -88,11 +90,11 @@ sig_fft1 = abs(sig_fft1);
 sig_fft1 = sig_fft1(1:Nr/2 + 1);
 
 % Plotting the range
-figure('Name', 'Range from First FFT')
+figure('Name', 'Range - FFT (first)')
 
 % Plot FFT output
 plot(sig_fft1)
-title('Range from First FFT')
+title('Range - FFT  (first)')
 xlabel('Range (m)')
 axis ([0 200 0 1]);
 
@@ -123,7 +125,7 @@ RDM = 10 * log10(RDM) ;
 doppler_axis = linspace(-100, 100, Nd);
 range_axis = linspace(-200, 200, Nr/2) * ((Nr/2) / 400);
 figure,surf(doppler_axis, range_axis, RDM);
-title('Range-Doppler Map from Second FFT')
+title('Range-Doppler Map -  FFT (Second)')
 ylabel('Range (m)')
 xlabel('Velocity (m/s)')
 zlabel('dB')
@@ -188,7 +190,7 @@ end
 % Display the CFAR output using the Surf function like we did for Range
 % Doppler Response output.
 figure,surf(doppler_axis, range_axis, signal_cfar);
-title("2D CFAR on Range-Doppler Map")
+title("2D CFAR - Range-Doppler Map")
 xlabel('Velocity (m/s)')
 ylabel('Range (m)')
 zlabel('CFAR Detection')
