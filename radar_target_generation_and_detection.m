@@ -9,36 +9,35 @@ clc;
 % Max Velocity = 100 m/s
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-range_max = 200;    % maximum range
-
+range_max = 200;        % maximum range
+c = 3e8;                % speed of light (m/s) - standard
+range_resolution = 1;   % range resolution (m) 
+% Operating carrier frequency of Radar
+fc = 77e9;   %carrier freq   
+% The number of chirps in one sequence. Its ideal to have 2^ value for the ease of running the FFT for Doppler Estimation.
+Nd = 128;   % # of doppler cells OR # of sent periods % number of chirps
+% The number of samples on each chirp.
+Nr = 1024;   % for length of time OR # of range cells
 
 %% User Defined Range and Velocity of target
 % Define the target initial position and velocity. Note: Velocity remains contant
 
 range = 100;         % target initial position (m)
-velocity = -5;     % target initial velocity (m/s)
+velocity = 5;     % target initial velocity (m/s) - approaching target
 
 
 %% FMCW Waveform Generation
 % Design the FMCW waveform by giving the specs of each of its parameters.
 % Calculate the Bandwidth (B_sweep), Chirp Time (Tchirp) and Slope (slope) of the FMCW chirp using the requirements above.
-
-c = 3e8;        % speed of light (m/s) - standard
-range_resolution = 1;  % range resolution (m) given 
-% from 
+% from lesson Range, Velocity, and Angle Resolution
 B_sweep = c / (2 * range_resolution);
+% FMCW radar system, the sweep time should be at least 5 to 6 times  - use factor 5.5
 Tchirp = 5.5 * 2 * range_max / c;
 slope = B_sweep / Tchirp;
 
-% Operating carrier frequency of Radar
-fc = 77e9;   %carrier freq  - given
 
-% The number of chirps in one sequence. Its ideal to have 2^ value for the ease of running the FFT for Doppler Estimation.
-Nd = 128;   % # of doppler cells OR # of sent periods % number of chirps
-
-% The number of samples on each chirp.
-Nr = 1024;   % for length of time OR # of range cells
-
+%% Signal generation and Moving Target simulation
+% Running the radar scenario over the time.
 % Timestamp for running the displacement scenario for every sample on each chirp
 t = linspace(0, Nd*Tchirp, Nr*Nd); % total time for samples
 
@@ -51,10 +50,6 @@ Mix = zeros(1,length(t));   % beat signal
 % Similar vectors for range_covered and time delay.
 r_t = zeros(1,length(t));
 td = zeros(1,length(t));
-
-
-%% Signal generation and Moving Target simulation
-% Running the radar scenario over the time.
 
 for i=1:length(t)
 
